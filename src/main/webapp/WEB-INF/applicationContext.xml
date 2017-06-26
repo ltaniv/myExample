@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+       http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd
+       http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.3.xsd">
+
+    <!-- 自动扫描该包，如果扫描到有@Component @Controller @Service等这些注解的类，则把这些类注册为bean  此处排除扫描指定注解-->
+    <context:component-scan base-package="org.demo.test">
+        <context:exclude-filter type="annotation" expression="org.springframework.web.bind.annotation.RestController"></context:exclude-filter>
+    </context:component-scan>
+
+    <util:properties id="properties" location="classpath:/config.properties"/>
+
+    <context:property-placeholder properties-ref="properties"/>
+
+    <!-- 激活自动代理功能 -->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+
+    <!--上下文工具类-->
+    <bean class="org.knapsack.spring.SpringApplicationContextUtils" />
+
+    <!-- 国际化资源文件 -->
+    <bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+        <property name="fallbackToSystemLocale" value="false" />
+        <!-- 不抛出NoSuchMessageException, 使用messageKey作为返回值 default false
+        <property name="useCodeAsDefaultMessage" value="true" />-->
+        <property name="fileEncodings" value="UTF-8"/>
+        <property name="cacheSeconds" value="120"/>
+        <property name="basename"><value>classpath:Messages</value></property>
+    </bean>
+
+
+    <!-- 配置JSON视图 -->
+    <bean id="mappingJacksonHttpMessageConverter" class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+        <property name="supportedMediaTypes">
+            <list><value>application/json;charset=UTF-8</value></list>
+        </property>
+        <property name="objectMapper">
+            <bean class="com.fasterxml.jackson.databind.ObjectMapper">
+                <property name="dateFormat">
+                    <bean class="java.text.SimpleDateFormat">
+                        <constructor-arg index="0" type="java.lang.String" value="yyyy-MM-dd HH:mm:ss"/>
+                    </bean>
+                </property>
+            </bean>
+        </property>
+    </bean>
+    <bean id="stringHttpMessageConverter" class="org.springframework.http.converter.StringHttpMessageConverter"/>
+    <bean id="requestMappingHandlerAdapter" class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+        <property name="messageConverters">
+            <list>
+                <ref bean="mappingJacksonHttpMessageConverter"/>
+                <ref bean="stringHttpMessageConverter"/>
+            </list>
+        </property>
+    </bean>
+
+
+    <!-- 配置视图解析器 如何把handler 方法返回值解析为实际的物理视图
+            <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+                <property name = "prefix" value="/views/"></property>
+                <property name = "suffix" value = ".jsp"></property>
+            </bean>
+            -->
+
+    <!-- 配置freeMarker的模板路径 -->
+    <bean id="freeMarkerConfigurer" class="org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer">
+        <property name="freemarkerSettings">
+            <!-- 设置freeMarker的配置文件路径 -->
+            <bean class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+                <property name="location" value="classpath:freemarker.properties"/>
+            </bean>
+        </property>
+        <property name="templateLoaderPath" value="/WEB-INF/ftl/"/>
+        <property name="freemarkerVariables">
+            <map>
+                <entry key="xml_escape">
+                    <bean class="freemarker.template.utility.XmlEscape"/>
+                </entry>
+            </map>
+        </property>
+        <property name="defaultEncoding" value="UTF-8"/>
+    </bean>
+    <!-- FreeMarker 工具类初始化 -->
+    <bean class="org.knapsack.freemarker.FreemarkerUtils">
+        <property name="freeMarkerConfig" ref="freeMarkerConfigurer"/>
+        <property name="properties" ref="properties"/>
+    </bean>
+
+
+    <!-- 自定义定向视图 -->
+    <bean id="viewResolver" class="org.knapsack.spring.ViewMultiResolver">
+        <property name="resolvers">
+            <map>
+                <entry key="jsp">
+                    <!--Jsp视图解析器 -->
+                    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+                        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+                        <property name="prefix" value="/"/>
+                        <property name="suffix" value=".jsp"/>
+                        <property name="contentType" value="text/html;charset=UTF-8"/>
+                        <property name="order" value="1"/>
+                    </bean>
+                </entry>
+                <entry key="ftl">
+                    <!-- 配置freeMarker视图解析器 -->
+                    <bean class="org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver">
+                        <property name="viewClass"
+                                  value="org.springframework.web.servlet.view.freemarker.FreeMarkerView"/>
+                        <property name="contentType" value="text/html; charset=utf-8"/>
+                        <property name="cache" value="false"/>
+                        <property name="suffix" value=".ftl"></property>
+                        <property name="exposeRequestAttributes" value="true"/>
+                        <property name="exposeSessionAttributes" value="true"/>
+                        <property name="exposeSpringMacroHelpers" value="true"/>
+                    </bean>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+</beans>

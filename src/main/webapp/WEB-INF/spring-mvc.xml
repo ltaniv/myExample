@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+       http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+       http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.3.xsd">
+
+
+    <!-- 自动扫描该包，如果扫描到有@Component @Controller @Service等这些注解的类，则把这些类注册为bean  此处仅扫描指定注解-->
+    <context:component-scan base-package="org.demo.test">
+        <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.RestController"></context:include-filter>
+    </context:component-scan>
+
+    <!--让Spring用默认的Servlet来响应静态文件-->
+    <mvc:default-servlet-handler />
+
+    <!-- 验证器 Creates the JSR-303 Validator -->
+    <bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+        <property name="messageInterpolator" ref="messageInterpolator" />
+        <property name="providerClass" value="org.hibernate.validator.HibernateValidator" />
+        <!-- 如果不加,默认使用classpath下的 ValidationMessages.properties
+        <property name="validationMessageSource" ref="messageSource" /> -->
+    </bean>
+    <bean id="messageInterpolator" class="org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator">
+        <constructor-arg name="userResourceBundleLocator" index="0" ref="userResourceBundleLocator"></constructor-arg>
+        <constructor-arg name="cachingEnabled" index="1" value="true"></constructor-arg>
+    </bean>
+    <bean id="userResourceBundleLocator" class="org.hibernate.validator.resourceloading.PlatformResourceBundleLocator">
+        <constructor-arg name="bundleName" value="ValidationMessages" />
+    </bean>
+
+    <mvc:annotation-driven validator="validator">
+        <mvc:message-converters register-defaults="true">
+            <!--  JSON转换器 -->
+            <bean id="fastJsonHttpMessageConverter" class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+                <property name="charset" value="UTF-8" />
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>text/html;charset=UTF-8</value>
+                        <value>text/json;charset=UTF-8</value>
+                        <value>application/json;charset=UTF-8</value>
+                    </list>
+                </property>
+                <property name="features">
+                    <list>
+                        <value>WriteDateUseDateFormat</value>
+                    </list>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+
+    <mvc:interceptors>
+        <!-- 使用bean定义一个Interceptor，直接定义在mvc:interceptors根下面的Interceptor将拦截所有的请求-->
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <bean class="org.knapsack.freemarker.HtmlFactoryInterceptor" />
+        </mvc:interceptor>
+    </mvc:interceptors>
+
+</beans>
