@@ -1,10 +1,12 @@
 package org.demo.test.pojo;
 
 import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.GroupSequence;
+import javax.validation.constraints.Pattern;
 
 /**
  * Created by admin on 2017-04-13.
@@ -20,8 +22,11 @@ public class User {
     public interface OrderedChecks {}*/
 
     @NotBlank(groups = {RegisterChecks.class,LoginChecks.class})
+    @Pattern(regexp ="^\\w+$",groups ={RegisterChecks.class})
+    @Length(min = 4,max = 11,groups ={RegisterChecks.class})
     private String name;
 
+    @NotBlank(groups = {RegisterChecks.class})
     @Email(groups = RegisterChecks.class)
     private String email;
     @NotEmpty(groups = {RegisterChecks.class,LoginChecks.class})
