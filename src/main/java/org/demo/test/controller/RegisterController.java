@@ -1,8 +1,13 @@
 package org.demo.test.controller;
 
+import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
+import org.demo.test.Configuration;
 import org.knapsack.freemarker.Html;
 import org.knapsack.spring.AjaxFormUtils;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.knapsack.spring.ControllerUtils;
+import org.knapsack.spring.SpringApplicationContextUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
@@ -11,19 +16,26 @@ import org.springframework.web.servlet.ModelAndView;
 import org.knapsack.freemarker.FreemarkerUtils;
 import org.demo.test.pojo.User;
 
+import javax.annotation.Resource;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+
+import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
 
 /** 注册模拟
  * Created by admin on 2017-04-12.
  */
 @RestController
 public class RegisterController {
+
+
 
     //注册页
     @RequestMapping(value = "/register.do", method = RequestMethod.GET)
@@ -83,14 +95,12 @@ public class RegisterController {
      */
     @RequestMapping(value = "/login.do", method = RequestMethod.POST)
     //多个实体验证 @Valid @ModelAttribute("a") A a, BindingResult aErrors, @Valid @ModelAttribute("b") B b, BindingResult bErrors
-    public Object doLogin(HttpServletRequest request, HttpServletResponse response, @RequestParam @NotEmpty String captcha, @ModelAttribute("user") @Validated(User.RegisterChecks.class) User user, BindingResult result) throws ServletException, IOException {
+    public Object doLogin(HttpServletRequest request, HttpServletResponse response, @RequestParam String captcha, @ModelAttribute("user") @Validated(User.LoginChecks.class) User user, BindingResult result) throws ServletException, IOException {
         Map<String, Object> map = new HashMap<String, Object>();
+        HttpSession session=request.getSession();
 
-        //String[] s=result.resolveMessageCodes("captcha.error");
 
-        //FieldError oe=new FieldError( "","captcha",s.toString());
-        //result.addError(oe);
-
+        ControllerUtils.captchaVerify(captcha,ObjectUtils.toString(session.getAttribute(Configuration.SES_CAPTCHA)),result,request.getLocale());
 
         //验证失败
         if(result.hasErrors()){

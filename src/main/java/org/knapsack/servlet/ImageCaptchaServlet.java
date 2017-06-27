@@ -1,5 +1,7 @@
 package org.knapsack.servlet;
 
+import org.demo.test.Configuration;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -119,6 +121,7 @@ public class ImageCaptchaServlet extends HttpServlet {
 
 	public void init(ServletConfig config) throws ServletException {
 		String key=config.getInitParameter("sessionKeyName");
+		Configuration.SES_CAPTCHA=key;
 		sessionKeyName=(key!=null&&!"".equals(key))?key:sessionKeyName;
 	}
 }

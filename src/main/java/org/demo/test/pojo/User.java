@@ -19,7 +19,7 @@ public class User {
     @GroupSequence({OneChecks.class,TwoChecks.class,ThreeChecks.class})
     public interface OrderedChecks {}*/
 
-    @NotEmpty(groups = {RegisterChecks.class,LoginChecks.class})
+    @NotBlank(groups = {RegisterChecks.class,LoginChecks.class})
     private String name;
 
     @Email(groups = RegisterChecks.class)
